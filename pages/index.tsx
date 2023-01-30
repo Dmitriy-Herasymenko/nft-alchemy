@@ -13,9 +13,12 @@ export async function getServerSideProps({}) {
 
   const fetchURL = `${baseURL}?owner=${process.env.NEXT_PUBLIC_OWNER}`;
 
+
   const nfts = await fetch(fetchURL, requestOptions).then((data) =>
     data.json()
   );
+
+  console.log(" NFTs", nfts);
   return {
     props: { nfts },
   };
