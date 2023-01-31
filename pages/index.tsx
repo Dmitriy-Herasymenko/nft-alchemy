@@ -2,23 +2,21 @@ import Head from "next/head";
 import { useEffect } from "react";
 import { useState } from "react";
 import NFTCards from "../components/NFTCards";
+import { Grid } from "@nextui-org/react";
+import { Pagination } from "@nextui-org/react";
+
+const PAGE_ROWS = 1;
 
 export async function getServerSideProps({}) {
   const baseURL = `https://eth-mainnet.alchemyapi.io/v2/${process.env.NEXT_PUBLIC_API_KEY}/getNFTs/`;
-  console.log("Fetching NFTs");
-
   let requestOptions = {
     method: "GET",
   };
-
   const fetchURL = `${baseURL}?owner=${process.env.NEXT_PUBLIC_OWNER}`;
-
-
   const nfts = await fetch(fetchURL, requestOptions).then((data) =>
     data.json()
   );
 
-  console.log(" NFTs", nfts);
   return {
     props: { nfts },
   };
@@ -37,8 +35,22 @@ export async function getServerSideProps({}) {
 }
 
 const Home = ({ nfts }: any) => {
-  const [collection, setCollectionAddress] = useState("");
+  const [pages, setPages] = useState(PAGE_ROWS);
+  const [nftPage, setNftPage] = useState([])
   const [wallet, setWalletAddress] = useState(process.env.NEXT_PUBLIC_OWNER);
+
+  const loadMoreNfts = (page:number) => {
+    let start = (page - 1) * 10;
+    let end = start + 9;
+    let newNFTs = nfts.ownedNfts.slice(start, end);
+    console.log("New NFTs : ", newNFTs);
+    setNftPage(newNFTs);
+    setPages(Math.ceil(nfts.ownedNfts.length / 10));
+  };
+
+  useEffect(() => {
+    loadMoreNfts(pages);
+  }, [nfts, pages]);
 
   return (
     <div className="flex flex-col items-center justify-center py-8 gap-y-3">
@@ -64,12 +76,12 @@ const Home = ({ nfts }: any) => {
         >
           Let's Go!
         </button>
-        <div className="flex flex-wrap gap-y-12 mt-4 w-5/6 gap-x-2 justify-center">
-          {nfts.ownedNfts.length &&
-            nfts.ownedNfts.map((nft: any) => (
+        <Grid.Container gap={2} justify="flex-start">
+          {nftPage?.map((nft: any) => (
               <NFTCards key={nft.id?.tokenId} nfts={nft} />
             ))}
-        </div>
+         </Grid.Container>
+         <Pagination total={nfts.ownedNfts.length} initialPage={pages} onChange={ (e) => setPages(e)} />
       </div>
     </div>
   );
